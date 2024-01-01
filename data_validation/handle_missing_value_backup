@@ -1,0 +1,178 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "<class 'pandas.core.frame.DataFrame'>\n",
+      "RangeIndex: 32769 entries, 0 to 32768\n",
+      "Data columns (total 16 columns):\n",
+      " #   Column           Non-Null Count  Dtype  \n",
+      "---  ------           --------------  -----  \n",
+      " 0   new_index        32769 non-null  int64  \n",
+      " 1   upload_date      32769 non-null  object \n",
+      " 2   house_direction  12371 non-null  object \n",
+      " 3   bedroom          21139 non-null  object \n",
+      " 4   toilet           17773 non-null  object \n",
+      " 5   legits           29897 non-null  object \n",
+      " 6   furniture        24806 non-null  object \n",
+      " 7   floors           24222 non-null  object \n",
+      " 8   facade           19821 non-null  object \n",
+      " 9   entrance         15801 non-null  object \n",
+      " 10  city             32769 non-null  object \n",
+      " 11  district         22731 non-null  object \n",
+      " 12  ward             24924 non-null  object \n",
+      " 13  street           21571 non-null  object \n",
+      " 14  area             32710 non-null  float64\n",
+      " 15  price            32769 non-null  float64\n",
+      "dtypes: float64(2), int64(1), object(13)\n",
+      "memory usage: 4.0+ MB\n"
+     ]
+    }
+   ],
+   "source": [
+    "import pandas as pd\n",
+    "\n",
+    "# Load the dataset\n",
+    "file_path = '/home/nmh/ds/project/data_validation/concatenated_data.csv'\n",
+    "\n",
+    "dtype_dict = {\n",
+    "    'bedroom': 'object',\n",
+    "    'toilet': 'object',\n",
+    "    'floors': 'object',\n",
+    "    'facade': 'object',\n",
+    "    'entrance': 'object',\n",
+    "}\n",
+    "\n",
+    "df = pd.read_csv(file_path, dtype=dtype_dict, low_memory=False)\n",
+    "df.info()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Percentage of Missing Values per Column:\n",
+      "new_index           0.000000\n",
+      "upload_date         0.000000\n",
+      "house_direction    62.247856\n",
+      "bedroom            35.490860\n",
+      "toilet             45.762764\n",
+      "legits              8.764381\n",
+      "furniture          24.300406\n",
+      "floors             26.082578\n",
+      "facade             39.512954\n",
+      "entrance           51.780646\n",
+      "city                0.000000\n",
+      "district           30.632610\n",
+      "ward               23.940309\n",
+      "street             34.172541\n",
+      "area                0.180048\n",
+      "price               0.000000\n",
+      "dtype: float64\n",
+      "\n",
+      "Columns to consider dropping (more than 50% missing):\n",
+      "['house_direction', 'entrance']\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Calculate the percentage of missing values for each column\n",
+    "missing_percentages = df.isnull().mean() * 100\n",
+    "\n",
+    "print(\"Percentage of Missing Values per Column:\")\n",
+    "print(missing_percentages)\n",
+    "\n",
+    "threshold = 50 \n",
+    "columns_to_drop = missing_percentages[missing_percentages > threshold].index.tolist()\n",
+    "\n",
+    "print(f\"\\nColumns to consider dropping (more than {threshold}% missing):\")\n",
+    "print(columns_to_drop)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "critical_columns = ['price', 'area']\n",
+    "\n",
+    "df.dropna(subset=critical_columns, inplace=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "for col in df.columns:\n",
+    "    if col not in critical_columns:\n",
+    "        if df[col].dtype == 'object':  # For categorical data\n",
+    "            df[col].fillna('None', inplace=True)\n",
+    "        else:\n",
+    "            df[col].fillna(df[col].median(), inplace=True)\n",
+    "            # df[col].fillna('None', inplace=True)  "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df.drop(df.columns[0], axis=1, inplace=True) \n",
+    "df.reset_index(drop=True, inplace=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "cleaned_file_path = '/home/nmh/ds/project/data_validation/cleaned_concatenated_data.csv'\n",
+    "df.to_csv(cleaned_file_path, index=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "base",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.9.13"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
